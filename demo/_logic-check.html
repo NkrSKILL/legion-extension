@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Legion logic check</title>
+</head>
+<body>
+<pre id="out">running</pre>
+<script type="module">
+  /**
+   * Регрессионный прогон протокола Legion без браузерного расширения.
+   * Запуск: python -m http.server из корня проекта, затем
+   *   chrome --headless=new --virtual-time-budget=8000 --dump-dom \
+   *     http://127.0.0.1:8791/demo/_logic-check.html
+   */
+  const sessionBag = {};
+  let syncOverrides = { useBackend: false, customWhitelist: ["trusted-custom.org"] };
+  const noop = () => {};
+  window.chrome = {
+    runtime: {
+      getURL: (p) => new URL("../" + p, location.href).href,
+      getManifest: () => ({ version: "0.0.0" })
+    },
+    storage: {
+      // backend в прогоне не используем — проверяем локальное ядро
+      sync: { get: async () => syncOverrides, set: async () => ({}) },
+      session: {
+        get: async (k) => (k in sessionBag ? { [k]: sessionBag[k] } : {}),
+        set: async (obj) => Object.assign(sessionBag, obj),
+        remove: async (k) => {
+          delete sessionBag[k];
+        }
+      },
+      onChanged: { addListener: noop }
+    }
+  };
+
+  const { runProtocol } = await import("../background/protocol.js");
+  const { clearVerdictCache } = await import("../background/cache.js");
+  const { recordTrustedPasswordHash, checkPasswordReuse } = await import("../background/pwdguard.js");
+
+  const NO_FIELDS = {
+    password: false,
+    card: false,
+    govId: false,
+    otp: false,
+    email: false,
+    phone: false,
+    name: false
+  };
+  const f = (over) => ({ ...NO_FIELDS, ...over });
+
+  const CASES = [
+    {
+      name: "whitelist: точный домен",
+      payload: { hostname: "gosuslugi.ru", url: "https://gosuslugi.ru/login", fields: f({ password: true }) },
+      expect: { status: "safe", stage: "whitelist" }
+    },
+    {
+      name: "whitelist: поддомен наследует доверие",
+      payload: { hostname: "lk.sberbank.ru", url: "https://lk.sberbank.ru/", fields: f({ password: true }) },
+      expect: { status: "safe", stage: "whitelist" }
+    },
+    {
+      name: "exactDomains: сам wordpress.com доверенный",
+      payload: { hostname: "wordpress.com", url: "https://wordpress.com/log-in", fields: f({ password: true }) },
+      expect: { status: "safe", stage: "whitelist" }
+    },
+    {
+      name: "exactDomains: чужой поддомен НЕ доверенный",
+      payload: { hostname: "sber-login.wordpress.com", url: "https://sber-login.wordpress.com/", fields: f({ password: true }) },
+      expectNot: { stage: "whitelist" }
+    },
+    {
+      name: "blacklist",
+      payload: { hostname: "phishing-demo.test", url: "https://phishing-demo.test/", fields: f() },
+      expect: { status: "danger", stage: "blacklist" }
+    },
+    {
+      name: "нет форм → тихий safe",
+      payload: { hostname: "blog.example", url: "https://blog.example/post", fields: f(), snippets: ["Статья про котов"] },
+      expect: { status: "safe", stage: "no_form" }
+    },
+    {
+      name: "demo/fake-phish: давление + пароль Госуслуг",
+      payload: {
+        hostname: "pay-bonus.example",
+        url: "https://pay-bonus.example/login",
+        fields: f({ password: true, email: true }),
+        hasSensitiveForm: true,
+        title: "Выплата компенсации",
+        snippets: ["Получите компенсацию от государства", "Осталось 3 минуты", "Введите пароль от Госуслуг для участия в выплате"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "demo/normal-login: обычный вход на неизвестном сайте",
+      payload: {
+        hostname: "example-shop.test",
+        url: "https://example-shop.test/login",
+        fields: f({ password: true, email: true }),
+        hasSensitiveForm: true,
+        title: "Вход в аккаунт",
+        snippets: ["Вход", "Войдите в свой аккаунт", "Email", "Пароль"]
+      },
+      expect: { status: "caution", cautionTier: "A" }
+    },
+    {
+      name: "demo/soft-email-only: только email без доп.сигналов",
+      payload: {
+        hostname: "news.example",
+        url: "https://news.example/subscribe",
+        fields: f({ email: true }),
+        title: "Подписка",
+        snippets: ["Оставьте email, чтобы получать новости"]
+      },
+      expect: { status: "safe" }
+    },
+    {
+      name: "БЫЛ БАГ: «доставка/заявка/ставка» + пароль → не красный",
+      payload: {
+        hostname: "shop.example",
+        url: "https://shop.example/login",
+        fields: f({ password: true, email: true }),
+        hasSensitiveForm: true,
+        title: "Магазин инструментов",
+        snippets: ["Доставка завтра", "Оформите заявку на рассрочку", "Выгодная ставка", "Вход в личный кабинет"]
+      },
+      expectNot: { status: "danger" }
+    },
+    {
+      name: "бренд упомянут, но без второго сигнала → жёлтый, не красный",
+      payload: {
+        hostname: "some-forum.example",
+        url: "https://some-forum.example/login",
+        fields: f({ password: true }),
+        hasSensitiveForm: true,
+        title: "Форум",
+        snippets: ["Можно войти через ВК", "Вход на форум"]
+      },
+      expect: { status: "caution" }
+    },
+    {
+      name: "lookalike подтверждает бренд → красный",
+      payload: {
+        hostname: "sber-login.xyz",
+        url: "https://sber-login.xyz/enter",
+        fields: f({ password: true }),
+        hasSensitiveForm: true,
+        title: "Сбербанк Онлайн",
+        snippets: ["Сбербанк Онлайн", "Войдите в систему"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "БЫЛ БАГ: слово «пароль» только в тексте модалки → без жёлтого",
+      payload: {
+        hostname: "docs.example",
+        url: "https://docs.example/help",
+        fields: f(),
+        textHints: { password: true, loginUi: true, email: false },
+        title: "Справка",
+        snippets: ["Забыли пароль? Инструкция по восстановлению", "Вход в систему описан ниже"]
+      },
+      expectNot: { status: "caution" }
+    },
+    {
+      name: "cross-origin форма + пароль → красный",
+      payload: {
+        hostname: "checkout.example",
+        url: "https://checkout.example/pay",
+        fields: f({ password: true, card: true }),
+        hasSensitiveForm: true,
+        formCrossOrigin: true,
+        title: "Оплата",
+        snippets: ["Введите данные карты"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "HTTP + только email → жёлтый tier B",
+      payload: {
+        hostname: "promo.example",
+        url: "http://promo.example/subscribe",
+        fields: f({ email: true }),
+        title: "Акция",
+        snippets: ["Оставьте email"]
+      },
+      expect: { status: "caution", cautionTier: "B" }
+    },
+    {
+      name: "customWhitelist: пользовательский домен пропускается на шаге 1",
+      payload: { hostname: "app.trusted-custom.org", url: "https://app.trusted-custom.org/login", fields: f({ password: true }) },
+      expect: { status: "safe", stage: "whitelist", customWhitelisted: true }
+    },
+    {
+      name: "localhost по HTTP не наказываем",
+      payload: {
+        hostname: "127.0.0.1",
+        url: "http://127.0.0.1:8765/normal-login.html",
+        fields: f({ email: true }),
+        title: "Демо",
+        snippets: ["Оставьте email"]
+      },
+      expectNot: { status: "caution" }
+    },
+    {
+      name: "IDN Punycode homograph: xn--sberbnk-60a.ru (sberbаnk с кириллической 'а') → danger",
+      payload: {
+        hostname: "xn--sberbnk-60a.ru",
+        url: "https://xn--sberbnk-60a.ru/login",
+        fields: f({ password: true }),
+        hasSensitiveForm: true,
+        title: "Личный кабинет",
+        snippets: ["Войдите в кабинет"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "Asset Spoofing: чужой сайт тянет иконку с gu-st.ru + форма пароля → danger",
+      payload: {
+        hostname: "check-Portal-2026.org",
+        url: "https://check-Portal-2026.org/auth",
+        fields: f({ password: true }),
+        hasSensitiveForm: true,
+        assetHosts: ["gu-st.ru"],
+        title: "Авторизация",
+        snippets: ["Введите данные для входа"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "Zero-Width обфускация в тексте + пароль → danger",
+      payload: {
+        hostname: "auth-portal.example",
+        url: "https://auth-portal.example/login",
+        fields: f({ password: true }),
+        hasSensitiveForm: true,
+        title: "Вход в С\u200Bбер\u200Bбанк Онлайн",
+        snippets: ["Введите пароль от С\u200Bбер\u200Bбанка для подтверждения"]
+      },
+      expect: { status: "danger" }
+    },
+    {
+      name: "ML-модель: подозрительный URL с высокой энтропией + изолированная форма → danger",
+      payload: {
+        hostname: "x9k2-secure-verify-account-auth-8812.xyz",
+        url: "https://x9k2-secure-verify-account-auth-8812.xyz/login/confirm-security-update",
+        fields: f({ password: true, card: true }),
+        hasSensitiveForm: true,
+        domStats: { totalLinks: 2, emptyOrHashLinks: 2, extAssetRatio: 0.9 },
+        title: "Security Update",
+        snippets: ["Verify your account"]
+      },
+      expect: { status: "danger" }
+    }
+  ];
+
+  const lines = [];
+  let failed = 0;
+
+  for (const c of CASES) {
+    await clearVerdictCache();
+    let state;
+    try {
+      state = await runProtocol({ snippets: [], title: "", ...c.payload });
+    } catch (e) {
+      failed += 1;
+      lines.push(`ERROR  ${c.name} :: ${e.message}`);
+      continue;
+    }
+
+    const problems = [];
+    for (const [key, value] of Object.entries(c.expect || {})) {
+      if (state[key] !== value) problems.push(`${key}=${state[key]} (ждали ${value})`);
+    }
+    for (const [key, value] of Object.entries(c.expectNot || {})) {
+      if (state[key] === value) problems.push(`${key} НЕ должен быть ${value}`);
+    }
+
+    if (problems.length) {
+      failed += 1;
+      lines.push(`FAIL   ${c.name} :: ${problems.join("; ")}`);
+    } else {
+      const tier = state.cautionTier ? `/${state.cautionTier}` : "";
+      lines.push(`OK     ${c.name} → ${state.status}${tier} (${state.stage}, risk ${state.risk})`);
+    }
+  }
+
+  // Тест Zero-Knowledge Password Reuse Guard
+  try {
+    const fakeDigest = "a".repeat(64);
+    await recordTrustedPasswordHash(fakeDigest, "gosuslugi.ru");
+    const sameHost = await checkPasswordReuse(fakeDigest, "lk.gosuslugi.ru");
+    const evilHost = await checkPasswordReuse(fakeDigest, "evil-phish.xyz");
+    if (sameHost.reused || !evilHost.reused || evilHost.trustedDomain !== "gosuslugi.ru") {
+      failed += 1;
+      lines.push("FAIL   Zero-Knowledge Password Reuse Guard");
+    } else {
+      lines.push(`OK     Zero-Knowledge Password Reuse Guard → reused on evil-phish.xyz (${evilHost.trustedDomain})`);
+    }
+  } catch (e) {
+    failed += 1;
+    lines.push("ERROR  Zero-Knowledge Password Reuse Guard :: " + e.message);
+  }
+
+  const totalTests = CASES.length + 1;
+  lines.push("", `TOTAL  ${totalTests - failed}/${totalTests} passed`, "");
+  document.getElementById("out").textContent = lines.join("\n");
+  document.title = failed ? "LOGIC-FAILED" : "LOGIC-PASSED";
+</script>
+</body>
+</html>

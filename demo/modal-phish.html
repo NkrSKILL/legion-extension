@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Магазин — модальный вход</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    button.open { padding: 10px 16px; }
+    .modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      align-items: center; justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .box {
+      background: #fff; padding: 24px; width: 360px;
+      border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+    .timer { color: red; font-weight: bold; }
+    input { display: block; width: 100%; margin: 8px 0; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Обычная витрина</h1>
+  <p>Формы на странице сначала нет. Она откроется в маленьком окне.</p>
+  <button class="open" id="openBtn">Войти / получить компенсацию</button>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="box">
+      <h2>Компенсация от государства</h2>
+      <p class="timer">Осталось 3 минуты</p>
+      <p>Введите пароль от Госуслуг для получения выплаты</p>
+      <label>Пароль</label>
+      <input type="password" name="password" placeholder="Пароль от Госуслуг" />
+      <button type="button">Подтвердить</button>
+    </div>
+  </div>
+
+  <p><small>Учебная страница Legion: форма появляется только после клика (модалка).</small></p>
+  <script>
+    document.getElementById("openBtn").onclick = () => {
+      document.getElementById("modal").classList.add("open");
+    };
+    // автооткрытие через 1.5с — проверка, что Legion реагирует БЕЗ ручного Rescan
+    setTimeout(() => {
+      document.getElementById("modal").classList.add("open");
+    }, 1500);
+  </script>
+</body>
+</html>

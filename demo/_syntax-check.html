@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Legion syntax check</title>
+</head>
+<body>
+<pre id="out">running</pre>
+<script>
+  // Заглушка chrome API: нас интересует только парсинг модулей,
+  // а не их работа вне расширения.
+  const noop = () => {};
+  const asyncNoop = async () => ({});
+  window.chrome = {
+    runtime: {
+      getURL: (p) => new URL("../" + p, location.href).href,
+      getManifest: () => ({ version: "0.0.0" }),
+      onMessage: { addListener: noop },
+      onInstalled: { addListener: noop },
+      sendMessage: asyncNoop
+    },
+    storage: {
+      sync: { get: asyncNoop, set: asyncNoop },
+      session: { get: asyncNoop, set: asyncNoop, remove: asyncNoop },
+      onChanged: { addListener: noop }
+    },
+    tabs: {
+      query: async () => [],
+      sendMessage: asyncNoop,
+      onUpdated: { addListener: noop },
+      onRemoved: { addListener: noop }
+    },
+    action: { setBadgeText: asyncNoop, setBadgeBackgroundColor: asyncNoop },
+    scripting: { executeScript: asyncNoop, insertCSS: asyncNoop }
+  };
+
+  const MODULES = [
+    "../background/settings.js",
+    "../background/cache.js",
+    "../background/api.js",
+    "../background/heuristics.js",
+    "../background/brands.js",
+    "../background/ml.js",
+    "../background/pwdguard.js",
+    "../background/caution.js",
+    "../background/tabstate.js",
+    "../background/protocol.js",
+    "../background/service-worker.js"
+  ];
+
+  const CLASSIC = ["../content/content.js", "../popup/popup.js", "../options/options.js"];
+
+  const lines = [];
+
+  async function checkModules() {
+    for (const path of MODULES) {
+      try {
+        await import(path);
+        lines.push("OK      " + path);
+      } catch (e) {
+        const kind = e instanceof SyntaxError ? "SYNTAX " : "RUNTIME";
+        lines.push(kind + " " + path + " :: " + e.message);
+      }
+    }
+  }
+
+  async function checkClassic() {
+    for (const path of CLASSIC) {
+      try {
+        const src = await fetch(path).then((r) => r.text());
+        // компиляция без выполнения — ловим только синтаксис
+        const wrapped = path.includes("popup") || path.includes("options")
+          ? "(async () => {" + src + "})"
+          : src;
+        new Function(wrapped);
+        lines.push("OK      " + path);
+      } catch (e) {
+        const kind = e instanceof SyntaxError ? "SYNTAX " : "RUNTIME";
+        lines.push(kind + " " + path + " :: " + e.message);
+      }
+    }
+  }
+
+  async function checkJson() {
+    for (const path of ["../manifest.json", "../data/whitelist.json", "../data/brands.json", "../data/blacklist.json"]) {
+      try {
+        const data = await fetch(path).then((r) => r.json());
+        const size = Array.isArray(data.domains) ? ` (${data.domains.length} домленов)` : "";
+        lines.push("OK      " + path + size);
+      } catch (e) {
+        lines.push("BADJSON " + path + " :: " + e.message);
+      }
+    }
+  }
+
+  (async () => {
+    await checkJson();
+    await checkClassic();
+    await checkModules();
+    const bad = lines.filter((l) => l.startsWith("SYNTAX") || l.startsWith("BADJSON")).length;
+    lines.push("", `TOTAL  ${lines.length - bad}/${lines.length} ok`, "");
+    document.getElementById("out").textContent = lines.join("\n");
+    document.title = bad ? "CHECK-FAILED" : "CHECK-PASSED";
+  })();
+</script>
+</body>
+</html>

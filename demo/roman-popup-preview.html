@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legion — Превью римского интерфейса (372px)</title>
+  <style>
+    /* ===== СЕРВИСНАЯ ОБЁРТКА СТЕНДА (НЕ ЧАСТЬ ПОПАПА) ===== */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0a0a0d;
+      color: #f8fafc;
+      font: 13px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 22px 16px 40px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      background: #12141c;
+      border: 1px solid #262b38;
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    .toolbar-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-right: 4px;
+    }
+
+    .t-btn {
+      background: #1a1d28;
+      color: #cbd5e1;
+      border: 1px solid #2e3446;
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .t-btn:hover {
+      border-color: #d4af37;
+      color: #fff;
+    }
+
+    .t-btn.active {
+      background: rgba(212, 175, 55, 0.18);
+      border-color: #d4af37;
+      color: #f3d87d;
+    }
+
+    .stage-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .col-caption {
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .col-caption.roman-cap {
+      color: #e5c158;
+    }
+
+    /* ===== РЕАЛЬНЫЙ КОНТЕЙНЕР ПОПАПА LEGION (ТОЧНО 372px КАК В ПЛАГИНЕ) ===== */
+    .popup-frame {
+      width: 372px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      user-select: none;
+    }
+
+    /* =======================================================================
+       ВАРИАНТ 1: НАШ ТЕКУЩИЙ ПОПАП (1-в-1 ИЗ popup.css)
+       ======================================================================= */
+    .popup-stealth {
+      --bg: #050507;
+      --bg-soft: #0b0c10;
+      --card: #101218;
+      --card-hover: #171a22;
+      --line: #232733;
+      --line-bright: #3a4052;
+      --text: #f8fafc;
+      --text-soft: #d1d5db;
+      --muted: #8b95a5;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.14);
+      --warn: #f59e0b;
+      --warn-soft: rgba(245, 158, 11, 0.14);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.16);
+      --blue: #ffffff;
+      --blue-soft: rgba(255, 255, 255, 0.1);
+      background: radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%), var(--bg);
+      color: var(--text);
+      border: 1px solid #232733;
+    }
+
+    /* =======================================================================
+       ВАРИАНТ 2: РИМСКИЙ СТИЛЬ LEGION (ТОТ ЖЕ ОБЪЁМ 372px, РИМСКИЕ ДЕТАЛИ)
+       ======================================================================= */
+    .popup-roman {
+      --bg: #070606;
+      --bg-soft: #100e0c;
+      --card: #13110e;
+      --card-hover: #1b1713;
+      --line: #332a1a;
+      --line-bright: #594727;
+      --gold: #d4af37;
+      --gold-bright: #f3d87d;
+      --gold-soft: rgba(212, 175, 55, 0.14);
+      --crimson: #991b1b;
+      --text: #faf6ee;
+      --text-soft: #dfd7c8;
+      --muted: #9e9380;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.14);
+      --warn: #f59e0b;
+      --warn-soft: rgba(245, 158, 11, 0.15);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.18);
+      --blue: #d4af37;
+      --blue-soft: rgba(212, 175, 55, 0.14);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(212, 175, 55, 0.09) 0%, transparent 62%),
+        var(--bg);
+      color: var(--text);
+      border: 1px solid rgba(212, 175, 55, 0.38);
+      position: relative;
+    }
+
+    /* Общая вёрстка реального попапа */
+    .app {
+      padding: 14px 14px 12px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .popup-roman .header {
+      border-bottom: none;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+    }
+
+    /* Римский меандр-разделитель под шапкой */
+    .roman-meander {
+      height: 7px;
+      margin-bottom: 11px;
+      opacity: 0.72;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='7' viewBox='0 0 24 7'%3E%3Cline x1='0' y1='0.5' x2='24' y2='0.5' stroke='%23d4af37' stroke-width='1' stroke-opacity='0.55'/%3E%3Cpath d='M0 6.5 H8 V2.5 H4 V4.5 H12 V6.5 H20 V2.5 H16 V4.5 H24' fill='none' stroke='%23d4af37' stroke-width='1' stroke-opacity='0.65'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .brand-top-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .brand-wordmark {
+      height: 30px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.08));
+    }
+
+    .popup-roman .brand-wordmark {
+      filter: sepia(1) saturate(2.6) hue-rotate(6deg) brightness(1.03) drop-shadow(0 2px 10px rgba(212, 175, 55, 0.22));
+    }
+
+    .roman-eagle-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 9.5px/1 "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.1em;
+      color: var(--gold-bright);
+      background: linear-gradient(180deg, rgba(153, 27, 27, 0.55), rgba(153, 27, 27, 0.28));
+      border: 1px solid rgba(212, 175, 55, 0.55);
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+
+    .brand-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-left: 2px;
+    }
+
+    .brand-tag {
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .popup-roman .brand-tag {
+      color: #c8b282;
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.12em;
+    }
+
+    .backend-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.14);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    .popup-roman .backend-pill {
+      border-radius: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.18s;
+    }
+
+    .popup-roman .icon-btn {
+      border-radius: 5px;
+      border-color: rgba(212, 175, 55, 0.35);
+      color: var(--gold-bright);
+    }
+
+    .icon-btn:hover,
+    .icon-btn.active {
+      background: var(--card-hover);
+      color: var(--blue);
+      border-color: var(--line-bright);
+    }
+
+    .switch {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #293548;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .popup-roman .slider {
+      border-radius: 5px;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 2px;
+      top: 2px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .popup-roman .slider::before {
+      border-radius: 3px;
+      background: #faf6ee;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--accent);
+    }
+
+    .popup-roman .switch input:checked + .slider {
+      background: linear-gradient(135deg, #b8860b, #d4af37);
+      border-color: #f3d87d;
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(18px);
+    }
+
+    /* ===== КАРТОЧКА СТАТУСА ===== */
+    .status-card {
+      position: relative;
+      background: linear-gradient(165deg, #12151e 0%, #0a0c11 100%);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 10px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      transition: 0.2s;
+    }
+
+    .popup-roman .status-card {
+      background: linear-gradient(165deg, #171410 0%, #0c0a08 100%);
+      border-radius: 6px;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+    }
+
+    /* Угловые римские заклёпки/скобы на карточке */
+    .popup-roman .status-card::before,
+    .popup-roman .status-card::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-color: var(--gold);
+      border-style: solid;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    .popup-roman .status-card::before {
+      top: 4px;
+      left: 4px;
+      border-width: 1.5px 0 0 1.5px;
+    }
+
+    .popup-roman .status-card::after {
+      bottom: 4px;
+      right: 4px;
+      border-width: 0 1.5px 1.5px 0;
+    }
+
+    .status-card[data-tone="safe"] {
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+
+    .status-card[data-tone="caution"] {
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    .status-card[data-tone="danger"] {
+      border-color: rgba(239, 68, 68, 0.58);
+    }
+
+    .status-top {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+    }
+
+    .status-badge-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .popup-roman .status-badge-icon {
+      border-radius: 6px;
+      font-family: "Georgia", "Times New Roman", serif;
+      position: relative;
+    }
+
+    .status-card[data-tone="safe"] .status-badge-icon {
+      background: var(--accent-soft);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .status-card[data-tone="caution"] .status-badge-icon {
+      background: var(--warn-soft);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+    }
+
+    .status-card[data-tone="danger"] .status-badge-icon {
+      background: var(--danger-soft);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .status-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .roman-crest-line {
+      font: 700 9.5px/1.1 "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 2px;
+    }
+
+    .status-title {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.25;
+      color: #ffffff;
+    }
+
+    .popup-roman .status-title {
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.02em;
+      color: #fff8eb;
+    }
+
+    .status-host {
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .risk-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--line);
+      color: var(--text-soft);
+      flex-shrink: 0;
+    }
+
+    .popup-roman .risk-pill {
+      border-radius: 4px;
+      background: rgba(20, 16, 12, 0.9);
+      border-color: rgba(212, 175, 55, 0.4);
+      color: var(--gold-bright);
+      font-family: "Georgia", serif;
+    }
+
+    /* 3 ступени протокола */
+    .steps-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-top: 11px;
+      padding: 6px 8px;
+      border-radius: 9px;
+      background: rgba(8, 13, 25, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .popup-roman .steps-bar {
+      border-radius: 4px;
+      background: rgba(10, 8, 6, 0.78);
+      border: 1px solid rgba(212, 175, 55, 0.22);
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      color: var(--muted);
+      padding: 2px 5px;
+      border-radius: 6px;
+    }
+
+    .step-num {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(148, 163, 184, 0.16);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .popup-roman .step-num {
+      border-radius: 3px;
+      font-family: "Georgia", "Times New Roman", serif;
+      width: 18px;
+    }
+
+    .step-item.active {
+      color: var(--text);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .popup-roman .step-item.active {
+      background: rgba(212, 175, 55, 0.16);
+      color: var(--gold-bright);
+    }
+
+    .step-item.active .step-num {
+      background: var(--blue);
+      color: #061325;
+    }
+
+    .popup-roman .step-item.active .step-num {
+      background: var(--gold);
+      color: #140f07;
+    }
+
+    .step-item.done {
+      color: #86efac;
+    }
+
+    .step-item.done .step-num {
+      background: rgba(34, 197, 94, 0.25);
+      color: #86efac;
+    }
+
+    .step-sep {
+      color: #525866;
+      font-size: 10px;
+    }
+
+    .popup-roman .step-sep {
+      color: var(--gold);
+      opacity: 0.6;
+    }
+
+    .stage-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+
+    .field-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .field-chip {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .field-chip.crit {
+      background: rgba(245, 158, 11, 0.13);
+      color: #fde68a;
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .popup-roman .field-chip {
+      border-radius: 3px;
+    }
+
+    .reasons {
+      margin: 8px 0 0;
+      padding-left: 16px;
+      color: var(--text-soft);
+      font-size: 11.5px;
+    }
+
+    .reasons li {
+      margin-bottom: 3px;
+    }
+
+    .whitelist-action-bar {
+      margin-top: 11px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .popup-roman .whitelist-action-bar {
+      border-top-color: rgba(212, 175, 55, 0.2);
+    }
+
+    .wl-add-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: rgba(34, 197, 94, 0.13);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      border-radius: 9px;
+      padding: 8px 10px;
+      font-weight: 650;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .popup-roman .wl-add-btn {
+      border-radius: 5px;
+      background: rgba(212, 175, 55, 0.13);
+      color: var(--gold-bright);
+      border-color: rgba(212, 175, 55, 0.42);
+    }
+
+    .wl-badge {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #86efac;
+    }
+
+    /* ===== СТАТИСТИКА СЕССИИ ===== */
+    .stats-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .popup-roman .stats-card {
+      border-radius: 6px;
+      border-color: rgba(212, 175, 55, 0.26);
+    }
+
+    .stats-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .section-label {
+      font-weight: 700;
+      font-size: 11.5px;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .popup-roman .section-label {
+      color: var(--gold);
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.08em;
+    }
+
+    .stats-reset {
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.5);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 10.5px;
+      cursor: pointer;
+    }
+
+    .popup-roman .stats-reset {
+      border-radius: 4px;
+      background: rgba(20, 16, 12, 0.8);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 6px 2px;
+      border-radius: 8px;
+      background: rgba(8, 13, 25, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .popup-roman .stat {
+      border-radius: 4px;
+      background: rgba(10, 8, 6, 0.78);
+      border-color: rgba(212, 175, 55, 0.14);
+    }
+
+    .stat-n {
+      display: block;
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .popup-roman .stat-n {
+      font-family: "Georgia", "Times New Roman", serif;
+    }
+
+    .stat-l {
+      display: block;
+      font-size: 9.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .stat.ok .stat-n { color: var(--accent); }
+    .stat.warn .stat-n { color: var(--warn); }
+    .stat.bad .stat-n { color: var(--danger); }
+
+    .stats-foot {
+      margin-top: 7px;
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    /* ===== КНОПКА ПЕРЕСКАНИРОВАТЬ ===== */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-weight: 750;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #050507;
+      letter-spacing: 0.02em;
+    }
+
+    .popup-roman .btn {
+      border-radius: 5px;
+      background: linear-gradient(180deg, #e5c158 0%, #b8860b 100%);
+      color: #120d05;
+      border: 1px solid #f3d87d;
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 11.5px;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.22);
+    }
+
+    .popup-roman .btn:hover {
+      background: linear-gradient(180deg, #f3d87d 0%, #c9971a 100%);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #64748b;
+      font-size: 10.5px;
+    }
+
+    .popup-roman .footer {
+      color: #8c7b60;
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: 0.04em;
+    }
+
+    /* ===== НАСТРОЙКИ ВНУТРИ ПОПАПА ===== */
+    .subview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .back-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .settings-group {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+
+    .group-title {
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-name {
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .setting-desc {
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .chk {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Панель переключения состояний для теста -->
+  <div class="toolbar">
+    <span class="toolbar-label">Тест состояния:</span>
+    <button class="t-btn active" onclick="setScenario('danger', this)">🔴 Угроза (Фишинг)</button>
+    <button class="t-btn" onclick="setScenario('caution', this)">🟡 Осторожно (Форма)</button>
+    <button class="t-btn" onclick="setScenario('safe', this)">🟢 Доверенный (Белый список)</button>
+    <button class="t-btn" onclick="toggleSettings(this)">⚙ Открыть настройки внутри попапа</button>
+  </div>
+
+  <div class="stage-wrap">
+    <!-- ЛЕВАЯ КОЛОНКА: ТЕКУЩИЙ ПОПАП (372px) -->
+    <div>
+      <div class="col-caption">Сейчас в плагине (Stealth · 372px)</div>
+      <div class="popup-frame popup-stealth">
+        <div class="app">
+          <header class="header">
+            <div class="brand">
+              <img src="../icons/logo-full.png" alt="LEGION" class="brand-wordmark" />
+              <div class="brand-meta">
+                <span class="brand-tag">PERIMETER ANTI-PHISHING</span>
+                <span class="backend-pill">Server ON</span>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="icon-btn" onclick="toggleSettings()" title="Настройки">⚙</button>
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </header>
+
+          <main class="main-view">
+            <section class="status-card js-card" data-tone="danger">
+              <div class="status-top">
+                <div class="status-badge-icon js-icon-stealth">!</div>
+                <div class="status-main">
+                  <div class="status-title js-title">Обнаружена подмена домена</div>
+                  <div class="status-host js-host">xn--sberbnk-60a.ru/login</div>
+                </div>
+                <div class="risk-pill js-risk">Риск 94%</div>
+              </div>
+
+              <div class="steps-bar">
+                <div class="step-item done js-s1"><span class="step-num">1</span><span>Белый список</span></div>
+                <div class="step-sep">→</div>
+                <div class="step-item done js-s2"><span class="step-num">2</span><span>Базы угроз</span></div>
+                <div class="step-sep">→</div>
+                <div class="step-item active js-s3"><span class="step-num">3</span><span>Анализ форм</span></div>
+              </div>
+
+              <div class="stage-meta js-stage">Этап: шаг 3 · глубокий анализ · ML 86%</div>
+
+              <div class="field-chips js-chips">
+                <span class="field-chip crit">Пароль</span>
+                <span class="field-chip crit">Банковская карта</span>
+              </div>
+
+              <ul class="reasons js-reasons">
+                <li>IDN-омограф (sberbаnk.ru): подмена букв под «Сбер»</li>
+                <li>Страница подгружает ресурсы бренда на чужом домене</li>
+              </ul>
+
+              <div class="whitelist-action-bar">
+                <button type="button" class="wl-add-btn js-wl-btn">＋ Добавить сайт в белый список</button>
+              </div>
+            </section>
+
+            <section class="stats-card">
+              <div class="stats-head">
+                <div class="section-label">Статистика сессии</div>
+                <button type="button" class="stats-reset">Сбросить</button>
+              </div>
+              <div class="stats-grid">
+                <div class="stat"><span class="stat-n">18</span><span class="stat-l">всего</span></div>
+                <div class="stat ok"><span class="stat-n">12</span><span class="stat-l">безопасно</span></div>
+                <div class="stat warn"><span class="stat-n">4</span><span class="stat-l">осторожно</span></div>
+                <div class="stat bad"><span class="stat-n">2</span><span class="stat-l">угроза</span></div>
+              </div>
+              <div class="stats-foot">уникальных сайтов: 14 · продолжили: 0</div>
+            </section>
+
+            <section class="quick-actions">
+              <button type="button" class="btn"><span>↻</span> Пересканировать</button>
+            </section>
+          </main>
+
+          <section class="settings-view" hidden>
+            <div class="subview-header">
+              <button type="button" class="back-btn" onclick="toggleSettings()">← Назад</button>
+              <strong style="font-size:13px">Настройки Legion</strong>
+              <span style="font-size:11px;color:#8b95a5">Вкладка ↗</span>
+            </div>
+            <div class="settings-group">
+              <div class="group-title">Режим защиты</div>
+              <div class="setting-row">
+                <div><div class="setting-name">Жёлтый режим (?)</div><div class="setting-desc">Предупреждать о формах</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">Детект подмены брендов и IDN</div><div class="setting-desc">Punycode-омографы и логотипы</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">ML-классификатор URL и DOM</div><div class="setting-desc">Энтропия и структура хоста</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">Zero-Knowledge защита паролей</div><div class="setting-desc">Блокировка ввода пароля на чужом сайте</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+            </div>
+          </section>
+
+          <footer class="footer">
+            <span>Legion v0.7.0</span><span>·</span><span>доп. защита от однодневок</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА: РИМСКИЙ ИНТЕРФЕЙС (ТОЧНО ТЕ ЖЕ 372px) -->
+    <div>
+      <div class="col-caption roman-cap">Римский вариант (Imperium · те же 372px)</div>
+      <div class="popup-frame popup-roman">
+        <div class="app">
+          <header class="header">
+            <div class="brand">
+              <div class="brand-top-line">
+                <img src="../icons/logo-full.png" alt="LEGION" class="brand-wordmark" />
+                <span class="roman-eagle-badge" title="X Легион — Защита рубежей">LEGIO X</span>
+              </div>
+              <div class="brand-meta">
+                <span class="brand-tag">PRAETORIAN WEB SHIELD</span>
+                <span class="backend-pill">Server ON</span>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="icon-btn" onclick="toggleSettings()" title="Настройки">⚙</button>
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </header>
+
+          <!-- Тонкий античный меандр вместо скучной серой линии -->
+          <div class="roman-meander"></div>
+
+          <main class="main-view">
+            <section class="status-card js-card" data-tone="danger">
+              <div class="status-top">
+                <!-- Лавровый венок + римская цифра статуса -->
+                <div class="status-badge-icon js-icon-roman">X</div>
+                <div class="status-main">
+                  <div class="roman-crest-line js-roman-sub">PERICULUM · РУБЕЖ ОБОРОНЫ</div>
+                  <div class="status-title js-title">Обнаружена подмена домена</div>
+                  <div class="status-host js-host">xn--sberbnk-60a.ru/login</div>
+                </div>
+                <div class="risk-pill js-risk">Риск 94%</div>
+              </div>
+
+              <!-- Те же 3 ступени, но с римскими цифрами I · II · III -->
+              <div class="steps-bar">
+                <div class="step-item done js-s1"><span class="step-num">I</span><span>Белый список</span></div>
+                <div class="step-sep">❖</div>
+                <div class="step-item done js-s2"><span class="step-num">II</span><span>Базы угроз</span></div>
+                <div class="step-sep">❖</div>
+                <div class="step-item active js-s3"><span class="step-num">III</span><span>Анализ форм</span></div>
+              </div>
+
+              <div class="stage-meta js-stage">Этап: шаг III · глубокий анализ · ML 86%</div>
+
+              <div class="field-chips js-chips">
+                <span class="field-chip crit">⬡ Пароль</span>
+                <span class="field-chip crit">⬡ Банковская карта</span>
+              </div>
+
+              <ul class="reasons js-reasons">
+                <li>IDN-омограф (sberbаnk.ru): подмена букв под «Сбер»</li>
+                <li>Страница подгружает ресурсы бренда на чужом домене</li>
+              </ul>
+
+              <div class="whitelist-action-bar">
+                <button type="button" class="wl-add-btn js-wl-btn">🏛 Добавить сайт в белый список</button>
+              </div>
+            </section>
+
+            <section class="stats-card">
+              <div class="stats-head">
+                <div class="section-label">⚜ Статистика дозора</div>
+                <button type="button" class="stats-reset">Сбросить</button>
+              </div>
+              <div class="stats-grid">
+                <div class="stat"><span class="stat-n">18</span><span class="stat-l">всего</span></div>
+                <div class="stat ok"><span class="stat-n">12</span><span class="stat-l">безопасно</span></div>
+                <div class="stat warn"><span class="stat-n">4</span><span class="stat-l">осторожно</span></div>
+                <div class="stat bad"><span class="stat-n">2</span><span class="stat-l">угроза</span></div>
+              </div>
+              <div class="stats-foot">уникальных сайтов: 14 · продолжили: 0</div>
+            </section>
+
+            <section class="quick-actions">
+              <button type="button" class="btn"><span>↻</span> Пересканировать</button>
+            </section>
+          </main>
+
+          <section class="settings-view" hidden>
+            <div class="subview-header">
+              <button type="button" class="back-btn" onclick="toggleSettings()">← Назад</button>
+              <strong style="font-size:13px;font-family:Georgia,serif;color:#f3d87d">Кодекс настроек Legion</strong>
+              <span style="font-size:11px;color:#c8b282">Вкладка ↗</span>
+            </div>
+            <div class="settings-group">
+              <div class="group-title" style="font-family:Georgia,serif">⚜ Устав защиты</div>
+              <div class="setting-row">
+                <div><div class="setting-name">Жёлтый режим (?)</div><div class="setting-desc">Предупреждать о формах</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">Детект подмены брендов и IDN</div><div class="setting-desc">Punycode-омографы и логотипы</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">ML-классификатор URL и DOM</div><div class="setting-desc">Энтропия и структура хоста</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+              <div class="setting-row">
+                <div><div class="setting-name">Zero-Knowledge защита паролей</div><div class="setting-desc">Блокировка ввода пароля на чужом сайте</div></div>
+                <input type="checkbox" class="chk" checked />
+              </div>
+            </div>
+          </section>
+
+          <footer class="footer">
+            <span>LEGIO X · v0.7.0</span><span>·</span><span>SPQR · защита от однодневок</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DATA = {
+      danger: {
+        tone: "danger",
+        iconStealth: "!",
+        iconRoman: "X",
+        romanSub: "PERICULUM · ТРЕВОГА ЛЕГИОНА",
+        title: "Обнаружена подмена домена",
+        host: "xn--sberbnk-60a.ru/login",
+        risk: "Риск 94%",
+        step: 3,
+        stageStealth: "Этап: шаг 3 · глубокий анализ · ML 86%",
+        stageRoman: "Этап: шаг III · глубокий анализ · ML 86%",
+        chips: ["Пароль", "Банковская карта"],
+        reasons: [
+          "IDN-омограф (sberbаnk.ru): подмена букв под «Сбер»",
+          "Страница подгружает ресурсы бренда на чужом домене"
+        ],
+        wlTextStealth: "＋ Добавить сайт в белый список",
+        wlTextRoman: "🏛 Добавить сайт в белый список"
+      },
+      caution: {
+        tone: "caution",
+        iconStealth: "?",
+        iconRoman: "II",
+        romanSub: "VIGILIA · ДОЗОР НА РУБЕЖЕ",
+        title: "Осторожно: форма на неизвестном сайте",
+        host: "portal-school42.ru/login",
+        risk: "Риск 40%",
+        step: 3,
+        stageStealth: "Этап: шаг 3 · жёлтый режим · уровень A · ML 18%",
+        stageRoman: "Этап: шаг III · жёлтый режим · уровень A · ML 18%",
+        chips: ["Email / логин", "Пароль"],
+        reasons: [
+          "Сайт не входит в белый список Legion",
+          "На странице есть поле пароля, но прямых признаков обмана нет"
+        ],
+        wlTextStealth: "＋ Добавить portal-school42.ru в белый список",
+        wlTextRoman: "🏛 Добавить portal-school42.ru в белый список"
+      },
+      safe: {
+        tone: "safe",
+        iconStealth: "✓",
+        iconRoman: "I",
+        romanSub: "PAX ROMANA · ДОВЕРЕННЫЙ ДОМЕН",
+        title: "Доверенный сайт",
+        host: "gosuslugi.ru/login",
+        risk: "",
+        step: 1,
+        stageStealth: "Этап: шаг 1 · белый список",
+        stageRoman: "Этап: шаг I · белый список",
+        chips: [],
+        reasons: [
+          "Домен во встроенном белом списке Legion"
+        ],
+        wlTextStealth: "🛡 Встроенный доверенный домен",
+        wlTextRoman: "🛡 Встроенный доверенный домен"
+      }
+    };
+
+    function setScenario(key, btn) {
+      document.querySelectorAll(".toolbar .t-btn").forEach((b) => {
+        if (!b.textContent.includes("настройки")) b.classList.remove("active");
+      });
+      if (btn) btn.classList.add("active");
+
+      const d = DATA[key];
+      document.querySelectorAll(".js-card").forEach((el) => el.setAttribute("data-tone", d.tone));
+      document.querySelector(".js-icon-stealth").textContent = d.iconStealth;
+      document.querySelector(".js-icon-roman").textContent = d.iconRoman;
+      document.querySelector(".js-roman-sub").textContent = d.romanSub;
+
+      document.querySelectorAll(".js-title").forEach((el) => (el.textContent = d.title));
+      document.querySelectorAll(".js-host").forEach((el) => (el.textContent = d.host));
+
+      document.querySelectorAll(".js-risk").forEach((el) => {
+        el.hidden = !d.risk;
+        el.textContent = d.risk;
+      });
+
+      document.querySelectorAll(".popup-stealth .js-stage").forEach((el) => (el.textContent = d.stageStealth));
+      document.querySelectorAll(".popup-roman .js-stage").forEach((el) => (el.textContent = d.stageRoman));
+
+      // Steps
+      [".popup-stealth", ".popup-roman"].forEach((scope) => {
+        const root = document.querySelector(scope);
+        const s1 = root.querySelector(".js-s1");
+        const s2 = root.querySelector(".js-s2");
+        const s3 = root.querySelector(".js-s3");
+        [s1, s2, s3].forEach((s) => s.classList.remove("active", "done"));
+        if (d.step === 1) {
+          s1.classList.add("active");
+        } else {
+          s1.classList.add("done");
+          s2.classList.add("done");
+          s3.classList.add("active");
+        }
+      });
+
+      // Chips
+      document.querySelectorAll(".js-chips").forEach((wrap, idx) => {
+        wrap.innerHTML = "";
+        if (!d.chips.length) {
+          wrap.hidden = true;
+          return;
+        }
+        wrap.hidden = false;
+        d.chips.forEach((c) => {
+          const sp = document.createElement("span");
+          sp.className = "field-chip crit";
+          sp.textContent = idx === 1 ? "⬡ " + c : c;
+          wrap.appendChild(sp);
+        });
+      });
+
+      // Reasons
+      document.querySelectorAll(".js-reasons").forEach((ul) => {
+        ul.innerHTML = "";
+        d.reasons.forEach((r) => {
+          const li = document.createElement("li");
+          li.textContent = r;
+          ul.appendChild(li);
+        });
+      });
+
+      document.querySelector(".popup-stealth .js-wl-btn").textContent = d.wlTextStealth;
+      document.querySelector(".popup-roman .js-wl-btn").textContent = d.wlTextRoman;
+    }
+
+    function toggleSettings(btn) {
+      const mains = document.querySelectorAll(".main-view");
+      const sets = document.querySelectorAll(".settings-view");
+      const showingSettings = sets[0].hidden;
+      mains.forEach((m) => (m.hidden = showingSettings));
+      sets.forEach((s) => (s.hidden = !showingSettings));
+      if (btn) btn.classList.toggle("active", showingSettings);
+    }
+  </script>
+</body>
+</html>
