@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Legion — Настройки</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="page-head">
+      <div class="brand">
+        <img src="../icons/logo-full.png" alt="LEGION" style="height:44px;width:auto;display:block;" />
+        <div>
+          <h1>Центр настроек</h1>
+          <p class="lead">Дополнительная защита от фишинговых страниц-однодневок (не замена антивируса)</p>
+        </div>
+      </div>
+      <span class="ver-badge" id="verBadge">v0.7.0</span>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Защита и режимы анализа</h2>
+        <label class="row">
+          <div>
+            <div class="row-title">Защита включена</div>
+            <div class="row-sub">Автоматическая проверка всех открываемых сайтов</div>
+          </div>
+          <input type="checkbox" class="chk" id="enabled" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Строгость анализа</div>
+            <div class="row-sub">Порог риска для блокирующего красного оверлея</div>
+          </div>
+          <select id="strictness">
+            <option value="normal">Обычная (порог риска 70%)</option>
+            <option value="strict">Строже (порог риска 55%)</option>
+          </select>
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Жёлтый режим осторожности (?)</div>
+            <div class="row-sub">Мягкое предупреждение на неизвестных сайтах с формами ввода</div>
+          </div>
+          <input type="checkbox" class="chk" id="cautionEnabled" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Детект подмены брендов и IDN/Punycode</div>
+            <div class="row-sub">Проверка мимикрии под бренды, Unicode-омографов, Zero-Width и кражи ресурсов</div>
+          </div>
+          <input type="checkbox" class="chk" id="checkBrandSpoof" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Локальная ML-модель структуры URL и DOM</div>
+            <div class="row-sub">Оценка Шеннон-энтропии, паттернов URL и изолированных форм (15 признаков)</div>
+          </div>
+          <input type="checkbox" class="chk" id="mlEnabled" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Zero-Knowledge защита паролей</div>
+            <div class="row-sub">Локальные SHA-256 отпечатки с солью: блокировка ввода пароля от доверенного сайта на чужом домене</div>
+          </div>
+          <input type="checkbox" class="chk" id="pwdGuardEnabled" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">Демо: всегда предупреждать на формах</div>
+            <div class="row-sub">Удобно для демонстрации блокирующего экрана на защите проекта</div>
+          </div>
+          <input type="checkbox" class="chk" id="demoForceWarn" />
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>Сервер (FastAPI) и нейросеть</h2>
+        <label class="row">
+          <div>
+            <div class="row-title">Использовать FastAPI Backend</div>
+            <div class="row-sub">Проверка по Google Safe Browsing и серверным правилам</div>
+          </div>
+          <input type="checkbox" class="chk" id="useBackend" />
+        </label>
+
+        <label class="row">
+          <div>
+            <div class="row-title">LLM на «сером» риске</div>
+            <div class="row-sub">Подключать языковую модель, когда эвристики дают промежуточный балл</div>
+          </div>
+          <input type="checkbox" class="chk" id="useLlmWhenUncertain" />
+        </label>
+
+        <label class="block">
+          <span>Адрес локального или облачного сервера</span>
+          <input type="text" id="backendUrl" placeholder="http://127.0.0.1:8787" />
+        </label>
+        <p class="hint" id="backendHint">Статус: проверка…</p>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Свой белый список доменов</h2>
+          <p class="hint">По одному домену на строку (например, <code>myschool.ru</code>). Эти сайты сразу получают зелёный статус на 1-м шаге.</p>
+        </div>
+        <span class="count-pill" id="wlCount">0 доменов</span>
+      </div>
+
+      <div class="quick-add-row">
+        <input type="text" id="quickDomainInput" placeholder="Добавить домен, например example.com" />
+        <button type="button" class="ghost" id="quickAddBtn">+ Добавить в список</button>
+      </div>
+
+      <textarea id="customWhitelist" rows="7" placeholder="example.com&#10;mybank.ru"></textarea>
+    </section>
+
+    <div class="actions-bar">
+      <button type="button" class="save" id="saveBtn">Сохранить настройки</button>
+      <button type="button" class="ghost" id="pingBtn">Проверить связь с Backend</button>
+      <span class="toast" id="toast" hidden>✓ Настройки сохранены</span>
+    </div>
+  </main>
+  <script src="options.js" type="module"></script>
+</body>
+</html>

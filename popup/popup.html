@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legion</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Шапка с фирменным логотипом LEGION -->
+    <header class="header">
+      <div class="brand">
+        <img src="../icons/logo-full.png" alt="LEGION" class="brand-wordmark" />
+        <div class="brand-meta">
+          <span class="brand-tag">PERIMETER ANTI-PHISHING</span>
+          <span class="backend-pill" id="backendPill" title="Статус локального сервера">…</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="icon-btn" id="toggleSettingsBtn" title="Настройки плагина" aria-label="Настройки">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+        <label class="switch" title="Вкл / выкл защиту">
+          <input type="checkbox" id="enabledToggle" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+
+    <!-- ================= ЭКРАН 1: ГЛАВНЫЙ ================= -->
+    <main id="mainView" class="view">
+      <section class="status-card" id="statusCard" data-tone="pending">
+        <div class="status-top">
+          <div class="status-badge-icon" id="statusIcon">…</div>
+          <div class="status-main">
+            <div class="status-title" id="statusTitle">Загрузка…</div>
+            <div class="status-host" id="statusHost">—</div>
+          </div>
+          <div class="risk-pill" id="riskPill" hidden>0%</div>
+        </div>
+
+        <!-- Визуальные ступени протокола -->
+        <div class="steps-bar" id="stepsBar">
+          <div class="step-item" data-step="1">
+            <span class="step-num">1</span>
+            <span class="step-name">Белый список</span>
+          </div>
+          <div class="step-sep">→</div>
+          <div class="step-item" data-step="2">
+            <span class="step-num">2</span>
+            <span class="step-name">Базы угроз</span>
+          </div>
+          <div class="step-sep">→</div>
+          <div class="step-item" data-step="3">
+            <span class="step-num">3</span>
+            <span class="step-name">Анализ форм</span>
+          </div>
+        </div>
+
+        <div class="stage-meta" id="stageLine">Этап: —</div>
+
+        <!-- Обнаруженные на странице поля -->
+        <div class="field-chips" id="fieldChips" hidden></div>
+
+        <!-- Причины вердикта -->
+        <ul class="reasons" id="reasonsList"></ul>
+
+        <!-- Быстрое управление белым списком для текущего сайта -->
+        <div class="whitelist-action-bar" id="whitelistBar" hidden>
+          <button type="button" class="btn wl-add-btn" id="addWhitelistBtn">
+            <span class="wl-icon">＋</span>
+            <span id="addWhitelistLabel">Добавить сайт в белый список</span>
+          </button>
+          <div class="wl-status-row" id="wlCustomRow" hidden>
+            <span class="wl-badge custom">✓ В вашем белом списке</span>
+            <button type="button" class="wl-remove-btn" id="removeWhitelistBtn">Убрать</button>
+          </div>
+          <div class="wl-status-row" id="wlBuiltinRow" hidden>
+            <span class="wl-badge builtin">🛡 Встроенный доверенный домен</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Статистика сессии -->
+      <section class="stats-card" id="statsCard" hidden>
+        <div class="stats-head">
+          <div class="section-label">Статистика сессии</div>
+          <button type="button" class="stats-reset" id="statsResetBtn" title="Сбросить счётчики">Сбросить</button>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat"><span class="stat-n" id="statTotal">0</span><span class="stat-l">всего</span></div>
+          <div class="stat ok"><span class="stat-n" id="statSafe">0</span><span class="stat-l">безопасно</span></div>
+          <div class="stat warn"><span class="stat-n" id="statCaution">0</span><span class="stat-l">осторожно</span></div>
+          <div class="stat bad"><span class="stat-n" id="statDanger">0</span><span class="stat-l">угроза</span></div>
+        </div>
+        <div class="stats-foot" id="statsFoot">—</div>
+      </section>
+
+      <!-- Быстрые действия -->
+      <section class="quick-actions">
+        <button type="button" class="btn primary" id="rescanBtn">
+          <span>↻</span> Пересканировать
+        </button>
+      </section>
+    </main>
+
+    <!-- ================= ЭКРАН 2: ОКНО НАСТРОЕК В ПЛАГИНЕ ================= -->
+    <section id="settingsView" class="view" hidden>
+      <div class="subview-header">
+        <button type="button" class="back-btn" id="backToMainBtn">
+          <span>←</span> Назад
+        </button>
+        <div class="subview-title">Настройки Legion</div>
+        <button type="button" class="link-btn" id="openFullOptionsBtn" title="Открыть в отдельной вкладке браузера">
+          Вкладка ↗
+        </button>
+      </div>
+
+      <div class="settings-scroll">
+        <!-- Группа 1: Анализ и защита -->
+        <div class="settings-group">
+          <div class="group-title">Режим защиты</div>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">Строгость анализа</div>
+              <div class="setting-desc">Порог срабатывания красного экрана</div>
+            </div>
+            <select id="strictness" class="select-sm">
+              <option value="normal">Обычная (70%)</option>
+              <option value="strict">Строже (55%)</option>
+            </select>
+          </label>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">Жёлтый режим (?)</div>
+              <div class="setting-desc">Предупреждать о формах на неизвестных сайтах</div>
+            </div>
+            <input type="checkbox" class="chk" id="cautionEnabledToggle" checked />
+          </label>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">Детект подмены брендов и IDN</div>
+              <div class="setting-desc">Punycode-омографы, логотипы и похожие домены</div>
+            </div>
+            <input type="checkbox" class="chk" id="brandSpoofToggle" checked />
+          </label>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">ML-классификатор URL и DOM</div>
+              <div class="setting-desc">Оценка энтропии, структуры хоста и ресурсов</div>
+            </div>
+            <input type="checkbox" class="chk" id="mlEnabledToggle" checked />
+          </label>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">Zero-Knowledge защита паролей</div>
+              <div class="setting-desc">Блокировать ввод пароля от белого списка на чужом сайте</div>
+            </div>
+            <input type="checkbox" class="chk" id="pwdGuardToggle" checked />
+          </label>
+
+          <div class="zk-bar">
+            <span class="setting-desc" id="pwdGuardFoot">Отпечатков паролей: 0</span>
+            <button type="button" class="stats-reset" id="clearPwdGuardBtn">Сбросить</button>
+          </div>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">Демо: всегда предупреждать</div>
+              <div class="setting-desc">Красный экран на любой странице с формой</div>
+            </div>
+            <input type="checkbox" class="chk" id="demoForceWarnToggle" />
+          </label>
+        </div>
+
+        <!-- Группа 2: Белый список пользователя -->
+        <div class="settings-group">
+          <div class="group-head-row">
+            <div class="group-title">Мой белый список</div>
+            <span class="badge-count" id="wlCountBadge">0</span>
+          </div>
+          <div class="setting-desc mb-6">Доверенные домены пропускаются на 1-м шаге без анализа</div>
+
+          <div class="wl-input-row">
+            <input type="text" id="wlNewDomainInput" class="input-sm" placeholder="example.com" />
+            <button type="button" class="btn-sm primary" id="wlAddManualBtn">+ Добавить</button>
+          </div>
+
+          <div class="wl-chips-list" id="wlChipsList"></div>
+        </div>
+
+        <!-- Группа 3: Сервер и ИИ -->
+        <div class="settings-group">
+          <div class="group-title">Сервер и нейросеть</div>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">FastAPI Backend</div>
+              <div class="setting-desc">Google Safe Browsing и серверный анализ</div>
+            </div>
+            <input type="checkbox" class="chk" id="useBackendToggle" checked />
+          </label>
+
+          <label class="setting-row">
+            <div>
+              <div class="setting-name">LLM на «сером» риске</div>
+              <div class="setting-desc">Подключать ИИ при спорных оценках</div>
+            </div>
+            <input type="checkbox" class="chk" id="useLlmToggle" checked />
+          </label>
+
+          <div class="backend-url-box">
+            <input type="text" id="backendUrlInput" class="input-sm" placeholder="http://127.0.0.1:8787" />
+            <button type="button" class="btn-sm ghost" id="saveBackendUrlBtn">ОК</button>
+          </div>
+          <div class="backend-line" id="backendLine">Backend: проверка…</div>
+          <div class="zk-bar mt-6">
+            <span class="setting-desc" id="feedsFoot">Фиды угроз: —</span>
+            <button type="button" class="stats-reset" id="refreshFeedsBtn">Обновить фиды</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Legion v<span id="version">0.6.0</span></span>
+      <span>·</span>
+      <span>доп. защита от однодневок</span>
+    </footer>
+  </div>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
