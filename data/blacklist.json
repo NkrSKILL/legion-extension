@@ -1,0 +1,9 @@
+{
+  "domains": [
+    "phishing-demo.test",
+    "evil-login-demo.local",
+    "secure-gosuslugi-login.tk",
+    "vk-bonus-auth.ml"
+  ],
+  "note": "Локальный демо/учебный чёрный список. Позже дополняется Safe Browsing / фидами."
+}

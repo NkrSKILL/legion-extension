@@ -1,0 +1,64 @@
+{
+  "brands": [
+    {
+      "name": "Госуслуги",
+      "aliases": ["госуслуги", "gosuslugi", "госуслуг"],
+      "domains": ["gosuslugi.ru"]
+    },
+    {
+      "name": "Сбер",
+      "aliases": ["сбер", "сбербанк", "sber", "sberbank"],
+      "domains": ["sberbank.ru", "sber.ru", "online.sberbank.ru"]
+    },
+    {
+      "name": "Тинькофф / Т-Банк",
+      "aliases": ["тинькофф", "тиньков", "tinkoff", "т-банк", "tbank"],
+      "domains": ["tinkoff.ru", "tbank.ru", "www.tbank.ru"]
+    },
+    {
+      "name": "ВТБ",
+      "aliases": ["втб", "vtb"],
+      "domains": ["vtb.ru"]
+    },
+    {
+      "name": "Альфа-Банк",
+      "aliases": ["альфа", "альфа-банк", "alfabank", "alfa-bank"],
+      "domains": ["alfabank.ru"]
+    },
+    {
+      "name": "VK",
+      "aliases": ["вконтакте", "vk", "вк"],
+      "domains": ["vk.com", "vk.ru"]
+    },
+    {
+      "name": "Яндекс",
+      "aliases": ["яндекс", "yandex", "ya.ru"],
+      "domains": ["yandex.ru", "ya.ru", "yandex.com"]
+    },
+    {
+      "name": "Steam",
+      "aliases": ["steam", "стим"],
+      "domains": ["store.steampowered.com", "steamcommunity.com", "help.steampowered.com"]
+    },
+    {
+      "name": "Discord",
+      "aliases": ["discord", "дискорд"],
+      "domains": ["discord.com", "discord.gg"]
+    },
+    {
+      "name": "Мос.ру",
+      "aliases": ["мос.ру", "mos.ru", "мэр Москвы"],
+      "domains": ["mos.ru"]
+    },
+    {
+      "name": "Wildberries",
+      "aliases": ["wildberries", "вайлдберриз", "wb"],
+      "domains": ["wildberries.ru", "www.wildberries.ru"]
+    },
+    {
+      "name": "Ozon",
+      "aliases": ["ozon", "озон"],
+      "domains": ["ozon.ru", "www.ozon.ru"]
+    }
+  ]
+}

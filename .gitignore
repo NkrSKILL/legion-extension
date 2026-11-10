@@ -1,0 +1,33 @@
+# Секреты: ключи Safe Browsing / LLM живут только локально
+backend/.env
+*.env
+!backend/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Локальная статистика backend (не коммитим)
+backend/data/stats.json
+
+# Редакторы / ОС
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Сборки расширения и презентации/документы Word
+*.zip
+*.crx
+*.pem
+*.pptx
+*.docx
+*.doc
+*.odt
+zenodo-paper/
+backend/black_osint.py
+
