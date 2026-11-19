@@ -20,10 +20,17 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+# Ключ подписи расширения (стабильный ID) — только локально, не в git
+keys/
+*.pem
+
+# Сборка установщика (PyInstaller / Inno Setup) — артефакты не коммитим
+installer/build/
+installer/output/
+
 # Сборки расширения и презентации/документы Word
 *.zip
 *.crx
-*.pem
 *.pptx
 *.docx
 *.doc

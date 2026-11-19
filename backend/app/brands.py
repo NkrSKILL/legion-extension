@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
 
-# brands.json лежит в ../data относительно backend — используем extension data
-BRANDS_PATH = Path(__file__).resolve().parents[2] / "data" / "brands.json"
+# brands.json лежит в ../data относительно backend — используем extension data.
+# В установленной версии путь задаётся LEGION_BRANDS_PATH (см. server_main.py).
+BRANDS_PATH = Path(
+    os.getenv("LEGION_BRANDS_PATH")
+    or Path(__file__).resolve().parents[2] / "data" / "brands.json"
+)
 
 BRAND_ASSET_DOMAINS: dict[str, list[str]] = {
     "Госуслуги": ["gosuslugi.ru", "gu-st.ru", "esia.gosuslugi.ru"],

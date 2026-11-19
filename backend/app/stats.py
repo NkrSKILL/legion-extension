@@ -15,7 +15,9 @@ from pathlib import Path
 from typing import Any
 
 # backend/data/stats.json — можно переопределить через LEGION_STATS_PATH
-_DEFAULT_PATH = Path(__file__).resolve().parents[1] / "data" / "stats.json"
+# (каталог данных задаётся LEGION_DATA_DIR в установленной версии)
+_DATA_DIR = Path(os.getenv("LEGION_DATA_DIR") or Path(__file__).resolve().parents[1] / "data")
+_DEFAULT_PATH = _DATA_DIR / "stats.json"
 _STATS_PATH = Path(os.getenv("LEGION_STATS_PATH") or _DEFAULT_PATH)
 _PERSIST = os.getenv("LEGION_STATS_PERSIST", "1") not in ("0", "false", "False")
 

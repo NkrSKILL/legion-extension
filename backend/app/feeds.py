@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -8,7 +9,10 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-DATA_FILE = Path(__file__).resolve().parents[1] / "data" / "threat_feeds.json"
+# Каталог записываемых данных. В установленной версии задаётся LEGION_DATA_DIR
+# (в PyInstaller-сборке __file__ указывает во временную папку, а не на диск).
+_DATA_DIR = Path(os.getenv("LEGION_DATA_DIR") or Path(__file__).resolve().parents[1] / "data")
+DATA_FILE = _DATA_DIR / "threat_feeds.json"
 
 OPENPHISH_FEED_URL = "https://openphish.com/feed.txt"
 URLHAUS_FEED_URL = "https://urlhaus.abuse.ch/downloads/text_online/"

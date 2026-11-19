@@ -10,6 +10,7 @@ import {
   backendResetStats,
   backendRefreshFeeds
 } from "./api.js";
+import { ensureBackendRunning } from "./nativehost.js";
 import { clearVerdictCache } from "./cache.js";
 import {
   recordTrustedPasswordHash,
@@ -32,6 +33,20 @@ import {
 const PENDING_TIMEOUT_MS = 4000;
 const pendingTimers = new Map();
 
+/** Имя таймера-сторожа: периодически поднимает локальный бэкенд, если он упал */
+const BACKEND_WATCHDOG_ALARM = "legion-backend-watchdog";
+
+/** Запустить локальный бэкенд через нативный хост (если он установлен и бэкенд включён) */
+async function startBackendIfNeeded({ force = false } = {}) {
+  try {
+    const settings = { ...DEFAULT_SETTINGS, ...(await chrome.storage.sync.get(DEFAULT_SETTINGS)) };
+    if (!settings.useBackend) return;
+    await ensureBackendRunning(settings.backendUrl || DEFAULT_SETTINGS.backendUrl, { force });
+  } catch (_) {
+    /* бэкенд опционален: без него расширение работает на локальных правилах */
+  }
+}
+
 chrome.runtime.onInstalled.addListener(async (details) => {
   const existing = await chrome.storage.sync.get(null);
   if (existing.enabled === undefined) {
@@ -44,10 +59,17 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   // После Reload / обновления Chrome НЕ перевнедряет content scripts в уже открытые
   // вкладки — делаем это сами, чтобы не требовать F5 «как раньше».
   await reinjectOpenTabs();
+  startBackendIfNeeded({ force: true });
 });
 
 chrome.runtime.onStartup.addListener(() => {
   reinjectOpenTabs().catch(() => {});
+  startBackendIfNeeded({ force: true });
+});
+
+chrome.alarms.create(BACKEND_WATCHDOG_ALARM, { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === BACKEND_WATCHDOG_ALARM) startBackendIfNeeded();
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -472,7 +494,13 @@ async function handleMessage(message, sender) {
     }
     case "BACKEND_STATUS": {
       const settings = { ...DEFAULT_SETTINGS, ...(await chrome.storage.sync.get(DEFAULT_SETTINGS)) };
-      const health = await backendHealth(settings.backendUrl || DEFAULT_SETTINGS.backendUrl);
+      const backendUrl = settings.backendUrl || DEFAULT_SETTINGS.backendUrl;
+      let health = await backendHealth(backendUrl);
+      if (!health.ok && settings.useBackend) {
+        // Бэкенд молчит — пробуем поднять его через нативный хост и перепроверяем
+        await ensureBackendRunning(backendUrl);
+        health = await backendHealth(backendUrl);
+      }
       return { ok: true, backend: health };
     }
     case "GET_STATS": {
