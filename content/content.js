@@ -846,6 +846,37 @@
     if (message?.type === "RESCAN") scanAndReport(true);
   });
 
+  // ---- Перехват отправки данных: мост между MAIN-world хуком (exfil-hook.js) и расширением
+  window.addEventListener("message", (e) => {
+    if (e.source !== window || !e.data || e.data.__legion !== "exfil-event") return;
+    const d = e.data;
+    send({
+      type: "EXFIL_EVENT",
+      payload: {
+        kind: d.kind === "blocked" ? "blocked" : "other",
+        via: String(d.via || "").slice(0, 16),
+        dest: String(d.dest || "").slice(0, 200),
+        field: String(d.field || "").slice(0, 16),
+        url: location.href,
+        hostname: resolveHostname()
+      }
+    });
+  });
+
+  // Хук включаем, если защита работает и сайт не в белом списке (доверенным сайтам не мешаем)
+  (async () => {
+    try {
+      const settings = await chrome.storage.sync.get({ enabled: true, exfilGuard: true });
+      let whitelisted = false;
+      if (settings.enabled && settings.exfilGuard) {
+        const wl = await send({ type: "GET_WHITELIST_STATUS", hostname: resolveHostname() });
+        whitelisted = !!wl?.whitelisted;
+      }
+      const on = settings.enabled && settings.exfilGuard && !whitelisted;
+      window.postMessage({ __legion: "exfil-config", mode: on ? "block" : "off" }, "*");
+    } catch (_) {}
+  })();
+
   let pwdTimer = null;
   let lastSentPwdDigest = "";
 

@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = {
   checkBrandSpoof: true,
   mlEnabled: true,
   pwdGuardEnabled: true,
+  exfilGuard: true,
   customWhitelist: [],
   demoForceWarn: false,
   backendUrl: "http://127.0.0.1:8787",

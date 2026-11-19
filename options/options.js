@@ -27,6 +27,7 @@ const cautionEnabled = document.getElementById("cautionEnabled");
 const checkBrandSpoof = document.getElementById("checkBrandSpoof");
 const mlEnabled = document.getElementById("mlEnabled");
 const pwdGuardEnabled = document.getElementById("pwdGuardEnabled");
+const exfilGuard = document.getElementById("exfilGuard");
 const demoForceWarn = document.getElementById("demoForceWarn");
 const useBackend = document.getElementById("useBackend");
 const useLlmWhenUncertain = document.getElementById("useLlmWhenUncertain");
@@ -68,6 +69,7 @@ async function load() {
   checkBrandSpoof.checked = s.checkBrandSpoof !== false;
   mlEnabled.checked = s.mlEnabled !== false;
   pwdGuardEnabled.checked = s.pwdGuardEnabled !== false;
+  exfilGuard.checked = s.exfilGuard !== false;
   demoForceWarn.checked = !!s.demoForceWarn;
   useBackend.checked = s.useBackend !== false;
   useLlmWhenUncertain.checked = s.useLlmWhenUncertain !== false;
@@ -102,6 +104,7 @@ async function saveAll() {
       checkBrandSpoof: checkBrandSpoof.checked,
       mlEnabled: mlEnabled.checked,
       pwdGuardEnabled: pwdGuardEnabled.checked,
+      exfilGuard: exfilGuard.checked,
       demoForceWarn: demoForceWarn.checked,
       useBackend: useBackend.checked,
       useLlmWhenUncertain: useLlmWhenUncertain.checked,

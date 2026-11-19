@@ -11,6 +11,7 @@ import {
   backendRefreshFeeds
 } from "./api.js";
 import { ensureBackendRunning } from "./nativehost.js";
+import { buildExfilState, isActiveExfil } from "./exfil.js";
 import { clearVerdictCache } from "./cache.js";
 import {
   recordTrustedPasswordHash,
@@ -327,10 +328,34 @@ async function handleMessage(message, sender) {
       }
       return { ok: true, scanned: true, state, tabUrl };
     }
+    case "EXFIL_EVENT": {
+      // Перехваченная отправка паролей / кодов / карт на чужой сайт (content/exfil-hook.js)
+      const tabId = sender.tab?.id;
+      if (!isValidTabId(tabId)) return { ok: false, error: "no tab" };
+      const frameId = Number.isInteger(sender.frameId) ? sender.frameId : 0;
+      const settings = { ...DEFAULT_SETTINGS, ...(await chrome.storage.sync.get(DEFAULT_SETTINGS)) };
+      if (!settings.enabled || !settings.exfilGuard) return { ok: true, ignored: true };
+
+      const prev = await getFrameState(tabId, frameId);
+      const state = buildExfilState({ ...message.payload }, prev);
+      clearPendingTimer(tabId);
+      const derived = await setFrameState(tabId, frameId, state);
+      await updateBadge(tabId, derived);
+      maybeReportStats(state, { frameId });
+      const opts = frameId ? { frameId } : {};
+      await chrome.tabs.sendMessage(tabId, { type: "SHOW_WARNING", payload: state }, opts).catch(() => {});
+      return { ok: true, state };
+    }
     case "PAGE_SCAN_RESULT": {
       const tabId = sender.tab?.id;
       if (!isValidTabId(tabId)) return { ok: false, error: "no tab" };
       const frameId = Number.isInteger(sender.frameId) ? sender.frameId : 0;
+
+      // Пока отправка остановлена, очередной скан страницы не должен убрать предупреждение
+      const exfilPrev = await getFrameState(tabId, frameId);
+      if (isActiveExfil(exfilPrev, message.payload?.url)) {
+        return { ok: true, state: exfilPrev };
+      }
 
       const host = message.payload?.hostname;
       const continuedHost = await getContinued(tabId);
